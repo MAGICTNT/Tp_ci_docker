@@ -1,17 +1,14 @@
-# Étape de construction
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build
 WORKDIR /app
 
-# Copier le fichier csproj et restaurer les dépendances
-COPY ./Worker/*.csproj ./Worker/
-RUN dotnet restore ./Worker/Worker.csproj
+COPY ./src/Worker/Worker.csproj ./Worker/
+WORKDIR /app/Worker
+RUN dotnet restore Worker.csproj
 
-# Copier le reste des fichiers et publier l'application
-COPY ./Worker/. ./Worker/
-RUN dotnet publish ./Worker/Worker.csproj -c Release -o out
+COPY ./src/Worker/ .
+RUN dotnet publish -c Release -o /out Worker.csproj
 
-# Étape de runtime
 FROM mcr.microsoft.com/dotnet/core/runtime:3.1 AS runtime
 WORKDIR /app
-COPY --from=build /app/Worker/out ./
+COPY --from=build /out ./
 ENTRYPOINT ["dotnet", "Worker.dll"]
