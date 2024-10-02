@@ -1,27 +1,17 @@
-# Étape 1 : Construction de l'image
-FROM mcr.microsoft.com/dotnet/sdk:3.1 AS build
-
-# Définir le répertoire de travail
+# Étape de construction
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build
 WORKDIR /app
 
-# Copier le fichier de projet et restaurer les dépendances
-COPY src/Worker/Worker.csproj ./Worker/
+# Copier le fichier csproj et restaurer les dépendances
+COPY ./Worker/*.csproj ./Worker/
 RUN dotnet restore ./Worker/Worker.csproj
 
-# Copier le reste des fichiers de l'application
-COPY . .
-
-# Construire l'application
+# Copier le reste des fichiers et publier l'application
+COPY ./Worker/. ./Worker/
 RUN dotnet publish ./Worker/Worker.csproj -c Release -o out
 
-# Étape 2 : Création de l'image finale
-FROM mcr.microsoft.com/dotnet/runtime:3.1 AS runtime
-
-# Définir le répertoire de travail
+# Étape de runtime
+FROM mcr.microsoft.com/dotnet/core/runtime:3.1 AS runtime
 WORKDIR /app
-
-# Copier les fichiers construits depuis l'étape de construction
-COPY --from=build /app/out .
-
-# Commande à exécuter lors du démarrage du conteneur
+COPY --from=build /app/Worker/out ./
 ENTRYPOINT ["dotnet", "Worker.dll"]
